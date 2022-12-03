@@ -542,23 +542,7 @@ const char *vmaf_version(void)
     return VMAF_VERSION;
 }
 
-int vmaf_write_output_to_stdout(VmafContext *vmaf, enum VmafOutputFormat fmt )
-{
-    const double fps = vmaf->pic_cnt /
-                ((double) (vmaf->feature_collector->timer.end -
-                vmaf->feature_collector->timer.begin) / CLOCKS_PER_SEC);
-    int ret = 0;
-    switch(fmt)
-    {
-        case VMAF_OUTPUT_FORMAT_JSON:
-        ret = vmaf_write_output_to_stdout_json(vmaf, vmaf->feature_collector,
-                                     vmaf->cfg.n_subsample, fps);
-        break;
-    }
-    return ret;
-}
-
-int vmaf_write_output_to_file(VmafContext *vmaf, const char *output_path,
+int vmaf_write_output(VmafContext *vmaf, const char *output_path,
                       enum VmafOutputFormat fmt)
 {
     FILE *outfile = fopen(output_path, "w");
@@ -574,21 +558,21 @@ int vmaf_write_output_to_file(VmafContext *vmaf, const char *output_path,
     int ret = 0;
     switch (fmt) {
     case VMAF_OUTPUT_FORMAT_XML:
-        ret = vmaf_write_output_to_file_xml(vmaf, vmaf->feature_collector, outfile,
+        ret = vmaf_write_output_xml(vmaf, vmaf->feature_collector, outfile,
                                     vmaf->cfg.n_subsample,
                                     vmaf->pic_params.w, vmaf->pic_params.h,
                                     fps);
         break;
     case VMAF_OUTPUT_FORMAT_JSON:
-        ret = vmaf_write_output_to_file_json(vmaf, vmaf->feature_collector, outfile,
+        ret = vmaf_write_output_json(vmaf, vmaf->feature_collector, outfile,
                                      vmaf->cfg.n_subsample, fps);
         break;
     case VMAF_OUTPUT_FORMAT_CSV:
-        ret = vmaf_write_output_to_file_csv(vmaf->feature_collector, outfile,
+        ret = vmaf_write_output_csv(vmaf->feature_collector, outfile,
                                     vmaf->cfg.n_subsample);
         break;
     case VMAF_OUTPUT_FORMAT_SUB:
-        ret = vmaf_write_output_to_file_sub(vmaf->feature_collector, outfile,
+        ret = vmaf_write_output_sub(vmaf->feature_collector, outfile,
                                     vmaf->cfg.n_subsample);
         break;
     default:

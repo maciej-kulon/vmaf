@@ -319,20 +319,8 @@ int vmaf_close(VmafContext *vmaf);
  *
  * @return 0 on success, or < 0 (a negative errno code) on error.
  */
-int vmaf_write_output_to_file(VmafContext *vmaf, const char *output_path,
+int vmaf_write_output(VmafContext *vmaf, const char *output_path,
                       enum VmafOutputFormat fmt);
-/**
- * Write VMAF stats to a standard output.
- *
- * @param vmaf         The VMAF context allocated with `vmaf_init()`.
- *
- * @param fmt          Output file format.
- *                     See `enum VmafOutputFormat` for options.
- *
- *
- * @return 0 on success, or < 0 (a negative errno code) on error.
- */
-int vmaf_write_output_to_stdout(VmafContext *vmaf, enum VmafOutputFormat fmt);
 
 /**
  * Get libvmaf version.
