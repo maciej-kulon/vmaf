@@ -545,7 +545,16 @@ const char *vmaf_version(void)
 int vmaf_write_output(VmafContext *vmaf, const char *output_path,
                       enum VmafOutputFormat fmt)
 {
-    FILE *outfile = fopen(output_path, "w");
+    FILE *outfile;
+    if(output_path == "stdout")
+    {
+        outfile = stdout;
+    }
+    else
+    {
+        outfile = fopen(output_path, "w");
+    }
+
     if (!outfile) {
         fprintf(stderr, "could not open file: %s\n", output_path);
         return -EINVAL;
@@ -579,7 +588,10 @@ int vmaf_write_output(VmafContext *vmaf, const char *output_path,
         ret = -EINVAL;
         break;
     }
-
-    fclose(outfile);
+    
+    if(output_path != "stdout")
+    {
+        fclose(outfile);
+    }
     return ret;
 }
