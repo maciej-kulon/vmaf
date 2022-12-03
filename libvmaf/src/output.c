@@ -44,7 +44,7 @@ static const char *pool_method_name[] = {
     [VMAF_POOL_METHOD_HARMONIC_MEAN] = "harmonic_mean",
 };
 
-int vmaf_write_output_xml(VmafContext *vmaf, VmafFeatureCollector *fc,
+int vmaf_write_output_to_file_xml(VmafContext *vmaf, VmafFeatureCollector *fc,
                           FILE *outfile, unsigned subsample, unsigned width,
                           unsigned height, double fps)
 {
@@ -119,7 +119,121 @@ int vmaf_write_output_xml(VmafContext *vmaf, VmafFeatureCollector *fc,
     return 0;
 }
 
-int vmaf_write_output_json(VmafContext *vmaf, VmafFeatureCollector *fc,
+int vmaf_write_output_to_stdout_json(VmafContext *vmaf, VmafFeatureCollector *fc,
+                           unsigned subsample, double fps)
+{
+    fprintf(stdout, "{\n");
+    fprintf(stdout, "  \"version\": \"%s\",\n", vmaf_version());
+    fprintf(stdout, "  \"fps\": %.2f,\n", fps);
+
+    unsigned n_frames = 0;
+    fprintf(stdout, "\"frames\": [");
+    for (unsigned i = 0 ; i < max_capacity(fc); i++) {
+        if ((subsample > 1) && (i % subsample))
+            continue;
+
+        unsigned cnt = 0;
+        for (unsigned j = 0; j < fc->cnt; j++) {
+            if (i > fc->feature_vector[j]->capacity)
+                continue;
+            if (fc->feature_vector[j]->score[i].written)
+                cnt++;
+        }
+        if (!cnt) continue;
+        fprintf(stdout, "%s", i > 0 ? ",\n" : "\n");
+
+        fprintf(stdout, "      \"frameNum\": %d,\n", i);
+        fprintf(stdout, "      \"metrics\": {\n");
+        fprintf(stdout, "    {\n");
+
+        unsigned cnt2 = 0;
+        for (unsigned j = 0; j < fc->cnt; j++) {
+            if (i > fc->feature_vector[j]->capacity)
+                continue;
+            if (!fc->feature_vector[j]->score[i].written)
+                continue;
+            cnt2++;
+            switch(fpclassify(fc->feature_vector[j]->score[i].value)) {
+            case FP_NORMAL:
+            case FP_ZERO:
+            case FP_SUBNORMAL:
+                fprintf(stdout, "        \"%s\": %.6f%s\n",
+                    vmaf_feature_name_alias(fc->feature_vector[j]->name),
+                    fc->feature_vector[j]->score[i].value,
+                    cnt2 < cnt ? "," : ""
+                );
+                break;
+            case FP_INFINITE:
+            case FP_NAN:
+                fprintf(stdout, "        \"%s\": null%s",
+                        vmaf_feature_name_alias(fc->feature_vector[j]->name),
+                        cnt2 < cnt ? "," : "");
+                break;
+            }
+        }
+        fprintf(stdout, "      }\n");
+        fprintf(stdout, "    }");
+        n_frames++;
+    }
+    fprintf(stdout, "\n  ],\n");
+
+    fprintf(stdout, "  \"pooled_metrics\": {");
+    for (unsigned i = 0; i < fc->cnt; i++) {
+        const char *feature_name = fc->feature_vector[i]->name;
+        fprintf(stdout, "%s", i > 0 ? ",\n" : "\n");
+        fprintf(stdout, "    \"%s\": {",
+                vmaf_feature_name_alias(feature_name));
+        for (unsigned j = 1; j < VMAF_POOL_METHOD_NB; j++) {
+            double score;
+            int err = vmaf_feature_score_pooled(vmaf, feature_name, j, &score,
+                                                0, n_frames - 1);
+            if (!err) {
+                fprintf(stdout, "%s", j > 1 ? ",\n" : "\n");
+                switch(fpclassify(score)) {
+                case FP_NORMAL:
+                case FP_ZERO:
+                case FP_SUBNORMAL:
+                    fprintf(stdout, "      \"%s\": %.6f",
+                            pool_method_name[j], score);
+                    break;
+                case FP_INFINITE:
+                case FP_NAN:
+                    fprintf(stdout, "      \"%s\": null",
+                            pool_method_name[j]);
+                    break;
+                }
+            }
+        }
+        fprintf(stdout, "\n");
+        fprintf(stdout, "    }");
+    }
+    fprintf(stdout, "\n  },\n");
+
+    fprintf(stdout, "  \"aggregate_metrics\": {");
+    for (unsigned i = 0; i < fc->aggregate_vector.cnt; i++) {
+        switch(fpclassify(fc->aggregate_vector.metric[i].value)) {
+        case FP_NORMAL:
+        case FP_ZERO:
+        case FP_SUBNORMAL:
+            fprintf(stdout, "\n    \"%s\": %.6f",
+                    fc->aggregate_vector.metric[i].name,
+                    fc->aggregate_vector.metric[i].value);
+            break;
+        case FP_INFINITE:
+        case FP_NAN:
+            fprintf(stdout, "\n    \"%s\": null",
+                    fc->aggregate_vector.metric[i].name);
+            break;
+        }
+        fprintf(stdout, "%s", i < fc->aggregate_vector.cnt - 1 ? "," : "");
+    }
+    fprintf(stdout, "\n  }\n");
+    fprintf(stdout, "}\n");
+    
+    return 0;
+}
+
+int vmaf_write_output_to_file_json(VmafContext *vmaf, VmafFeatureCollector *fc,
                            FILE *outfile, unsigned subsample, double fps)
 {
     fprintf(outfile, "{\n");
@@ -233,7 +347,7 @@ int vmaf_write_output_json(VmafContext *vmaf, VmafFeatureCollector *fc,
     return 0;
 }
 
-int vmaf_write_output_csv(VmafFeatureCollector *fc, FILE *outfile,
+int vmaf_write_output_to_file_csv(VmafFeatureCollector *fc, FILE *outfile,
                            unsigned subsample)
 {
 
@@ -271,7 +385,7 @@ int vmaf_write_output_csv(VmafFeatureCollector *fc, FILE *outfile,
     return 0;
 }
 
-int vmaf_write_output_sub(VmafFeatureCollector *fc, FILE *outfile,
+int vmaf_write_output_to_file_sub(VmafFeatureCollector *fc, FILE *outfile,
                           unsigned subsample)
 {
     for (unsigned i = 0 ; i < max_capacity(fc); i++) {
