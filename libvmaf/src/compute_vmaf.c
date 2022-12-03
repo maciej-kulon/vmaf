@@ -113,7 +113,8 @@ int compute_vmaf(double* vmaf_score, char* fmt, int width, int height,
                  char *log_fmt, int disable_clip, int disable_avx,
                  int enable_transform, int phone_model, int do_psnr,
                  int do_ssim, int do_ms_ssim, char *pool_method,
-                 int n_thread, int n_subsample, int enable_conf_interval)
+                 int n_thread, int n_subsample, int enable_conf_interval,
+                 int std_output)
 {
 
     vmaf_set_log_level(VMAF_LOG_LEVEL_INFO);
@@ -294,7 +295,11 @@ int compute_vmaf(double* vmaf_score, char* fmt, int width, int height,
     }
     if (output_fmt) {
         vmaf_use_vmafossexec_aliases();
-        err = vmaf_write_output(vmaf, log_path, output_fmt);
+        if(std_output == 1) {
+            err = vmaf_write_output_to_stdout(vmaf, output_fmt);
+        } else {
+            err = vmaf_write_output_to_file(vmaf, log_path, output_fmt);
+        }
         if (err) {
             vmaf_log(VMAF_LOG_LEVEL_ERROR,
                      "could not write output: %s\n", log_path);
