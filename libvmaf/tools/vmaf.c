@@ -415,7 +415,7 @@ int main(int argc, char *argv[])
     }
 
     if (c.output_path)
-        vmaf_write_output_to_file(vmaf, c.output_path, c.output_fmt);
+        vmaf_write_output(vmaf, c.output_path, c.output_fmt);
 
     for (unsigned i = 0; i < c.model_cnt; i++)
         vmaf_model_destroy(model[i]);

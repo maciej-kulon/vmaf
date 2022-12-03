@@ -107,7 +107,7 @@ static void getMemory(int itr_ctr, int state)
 
 static int run_wrapper(char *fmt, int width, int height, char *ref_path, char *dis_path, char *model_path,
         char *log_path, char *log_fmt, bool disable_clip, bool disable_avx, bool enable_transform, bool phone_model,
-        bool do_psnr, bool do_ssim, bool do_ms_ssim, char *pool_method, int n_thread, int n_subsample, bool enable_conf_interval, int std_output)
+        bool do_psnr, bool do_ssim, bool do_ms_ssim, char *pool_method, int n_thread, int n_subsample, bool enable_conf_interval)
 {
     double score;
 
@@ -194,7 +194,7 @@ static int run_wrapper(char *fmt, int width, int height, char *ref_path, char *d
     /* Run VMAF */
     ret = compute_vmaf(&score, fmt, width, height, read_frame, s, model_path, log_path, log_fmt,
                        disable_clip, disable_avx, enable_transform, phone_model, do_psnr, do_ssim,
-                       do_ms_ssim, pool_method, n_thread, n_subsample, enable_conf_interval, std_output);
+                       do_ms_ssim, pool_method, n_thread, n_subsample, enable_conf_interval);
 
 fail_or_end:
     if (s->ref_rfile)
@@ -234,7 +234,6 @@ int main(int argc, char *argv[])
     int n_thread = 0;
     int n_subsample = 1;
     bool enable_conf_interval = false;
-    int std_output = 0;
     char *temp;
 #if MEM_LEAK_TEST_ENABLE	
 	int itr_ctr;
@@ -371,11 +370,6 @@ int main(int argc, char *argv[])
         enable_conf_interval = true;
     }
 
-    if(cmdOptionExists(argv + 7, argv + argc, "--stdout" ))
-    {
-        std_output = 1;
-    }
-
     try
     {
 #if MEM_LEAK_TEST_ENABLE
@@ -384,13 +378,13 @@ int main(int argc, char *argv[])
 			getMemory(itr_ctr,1);
 			ret = run_wrapper(fmt, width, height, ref_path, dis_path, model_path,
                 log_path, log_fmt, disable_clip, disable_avx, enable_transform, phone_model,
-                do_psnr, do_ssim, do_ms_ssim, pool_method, n_thread, n_subsample, enable_conf_interval, std_output);
+                do_psnr, do_ssim, do_ms_ssim, pool_method, n_thread, n_subsample, enable_conf_interval);
 			getMemory(itr_ctr,2);
 		}
 #else
         return run_wrapper(fmt, width, height, ref_path, dis_path, model_path,
                 log_path, log_fmt, disable_clip, disable_avx, enable_transform, phone_model,
-                do_psnr, do_ssim, do_ms_ssim, pool_method, n_thread, n_subsample, enable_conf_interval, std_output);
+                do_psnr, do_ssim, do_ms_ssim, pool_method, n_thread, n_subsample, enable_conf_interval);
 #endif
     }
     catch (const std::exception &e)
